@@ -1,0 +1,16 @@
+{
+  "name": "pingroom-starter-human-review",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Add a human approval step to a script or AI agent with the PingRoom SDK.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "demo": "node src/demo.js",
+    "connect": "node src/connect.js",
+    "start": "node src/start.js",
+    "test": "node --test"
+  },
+  "dependencies": { "@pingroom/sdk": "0.7.0" },
+  "license": "MIT"
+}
