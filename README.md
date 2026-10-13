@@ -64,7 +64,7 @@ To adapt this example, change `validateProposal`, the visible question, and the 
 ## How the gate behaves
 
 - The full draft, within the sample's size limits, is visible in the question. A SHA-256 hash binds the validated, immutable snapshot to the question, along with a unique review attempt and matching prompt and context.
-- Only `state === 'answered'` with `answer.value === 'approve'`, matching question identity and data, direct responder scope, and a future expiry can execute.
+- Only `state === 'answered'` with `answer.value === 'approve'`, matching question identity and data, direct responder scope, and a future expiry can execute. Both created and resolved questions must preserve the requested option values and visible Approve/Deny labels.
 - Deny, expiry, and cancellation return `executed: false`. Invalid responses, transport errors, local timeout, and caller abort throw before execution.
 - Pass an `AbortSignal` to cancel. The sample handles Ctrl+C and termination signals. The two-minute default deadline covers creation and waiting; server expiry is at least 30 seconds.
 - Remote cancellation is best effort. A late successful create is also withdrawn while this process remains alive. If the process exits or the network fails, the question may remain until its TTL, but a late answer cannot resume this invocation.

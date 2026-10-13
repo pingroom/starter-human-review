@@ -40,8 +40,9 @@ function assertQuestion(question, expected, id) {
     || question.correlation_id !== expected.correlation_id
     || question.data?.proposal_hash !== expected.data.proposal_hash
     || !Array.isArray(question.options)
-    || question.options.length !== 2
-    || question.options[0]?.value !== 'approve' || question.options[1]?.value !== 'deny') {
+    || question.options.length !== expected.options.length
+    || expected.options.some((option, index) => question.options[index]?.value !== option.value
+      || question.options[index]?.label !== option.label)) {
     throw new ReviewError('question_mismatch', 'The returned question does not match this proposal and review attempt.');
   }
 }

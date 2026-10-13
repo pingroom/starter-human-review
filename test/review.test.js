@@ -36,6 +36,27 @@ for (const field of ['id', 'prompt', 'context', 'responder_scope', 'correlation_
   });
 }
 
+for (const phase of ['onCreate', 'onWait']) {
+  for (const [description, changeOptions] of [
+    ['swapped labels', (choices) => choices.map((choice, index) => ({ ...choice, label: choices[1 - index].label }))],
+    ['missing approve label', (choices) => [{ value: choices[0].value }, choices[1]]],
+    ['malformed deny label', (choices) => [choices[0], { ...choices[1], label: null }]],
+  ]) {
+    test(`rejects ${description} in ${phase} before execution`, async () => {
+      const { client, calls } = createOfflineClient({
+        [phase]: (question) => ({ ...question, options: changeOptions(question.options) }),
+      });
+      let executions = 0;
+      const error = await reviewThenExecute(options(client, {
+        execute: () => { executions += 1; },
+      })).then(() => null, (reason) => reason);
+      assert.equal(executions, 0, 'Mismatched visible choices must not execute.');
+      assert.equal(error?.code, 'question_mismatch');
+      if (phase === 'onCreate') assert.ok(!calls.some((call) => call.path.endsWith('/wait')));
+    });
+  }
+}
+
 test('an already-expired approval cannot execute', async () => {
   const { client } = createOfflineClient({ onWait: (q) => ({ ...q, expires_at: new Date(0).toISOString() }) });
   await assert.rejects(reviewThenExecute(options(client, { execute: () => assert.fail('unsafe execution') })), { code: 'expired_approval' });
