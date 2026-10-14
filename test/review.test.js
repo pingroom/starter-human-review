@@ -140,3 +140,9 @@ test('proposal maximum length keeps visible question under 500 characters', () =
   const value = validateProposal({ action: 'write_draft', filename: `${'a'.repeat(50)}.txt`, content: '🕊'.repeat(280) });
   assert.ok([...`Write local draft output/${value.filename}?\n\n${value.content}`].length < 500);
 });
+
+test('trailing whitespace is trimmed, as the server trims the prompt it stores', () => {
+  const value = validateProposal({ action: 'write_draft', filename: 'notes.txt', content: 'Ship the draft.\n\n' });
+  assert.equal(value.content, 'Ship the draft.');
+  assert.throws(() => validateProposal({ action: 'write_draft', filename: 'notes.txt', content: ' \n' }), /1–280/);
+});

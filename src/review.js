@@ -20,7 +20,14 @@ export function validateProposal(input) {
     || /[\u0000-\u0008\u000b-\u001f\u007f]/u.test(input.content)) {
     throw new ReviewError('invalid_proposal', 'Expected write_draft, a safe .txt filename, and 1–280 characters of text.');
   }
-  return Object.freeze({ action: input.action, filename: input.filename, content: input.content });
+  // The content ends the question's prompt, and the server trims whitespace
+  // from the ends of every string it stores. Trim it here so the prompt it
+  // echoes back matches, and the draft written is the text that was shown.
+  const content = input.content.trimEnd();
+  if (content.length < 1) {
+    throw new ReviewError('invalid_proposal', 'Expected write_draft, a safe .txt filename, and 1–280 characters of text.');
+  }
+  return Object.freeze({ action: input.action, filename: input.filename, content });
 }
 
 function abortable(promise, signal) {
