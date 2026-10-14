@@ -8,6 +8,17 @@ export class ReviewError extends Error {
   }
 }
 
+// What Laravel's TrimStrings middleware (Str::trim) strips from both ends of every string the server stores.
+const serverTrimmable = /^[\s\0\u0085\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u2060-\u2065\u206A-\u206F\u2800\u3164\uFFA0\u{1D159}\u{1D173}-\u{1D17A}\u{E0020}]$/u;
+
+/** Trim the end as the server does. JS trimEnd() keeps ZWSP, LRM/RLM, the soft hyphen, and other invisible marks. */
+function serverTrimEnd(value) {
+  const characters = [...value];
+  let end = characters.length;
+  while (end > 0 && serverTrimmable.test(characters[end - 1])) end -= 1;
+  return characters.slice(0, end).join('');
+}
+
 /** Validate the allowlisted action and detach it from mutable model/caller output. */
 export function validateProposal(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)
@@ -20,10 +31,10 @@ export function validateProposal(input) {
     || /[\u0000-\u0008\u000b-\u001f\u007f]/u.test(input.content)) {
     throw new ReviewError('invalid_proposal', 'Expected write_draft, a safe .txt filename, and 1–280 characters of text.');
   }
-  // The content ends the question's prompt, and the server trims whitespace
-  // from the ends of every string it stores. Trim it here so the prompt it
-  // echoes back matches, and the draft written is the text that was shown.
-  const content = input.content.trimEnd();
+  // The content ends the question's prompt, and the server trims the ends of
+  // every string it stores. Trim it the same way here so the prompt it echoes
+  // back matches, and the draft written is the text that was shown.
+  const content = serverTrimEnd(input.content);
   if (content.length < 1) {
     throw new ReviewError('invalid_proposal', 'Expected write_draft, a safe .txt filename, and 1–280 characters of text.');
   }

@@ -146,3 +146,23 @@ test('trailing whitespace is trimmed, as the server trims the prompt it stores',
   assert.equal(value.content, 'Ship the draft.');
   assert.throws(() => validateProposal({ action: 'write_draft', filename: 'notes.txt', content: ' \n' }), /1–280/);
 });
+
+test('trailing invisible marks the server trims are trimmed too, so the stored prompt matches', async () => {
+  // RLM, ZWSP and the soft hyphen survive JS trimEnd(), but Laravel's
+  // TrimStrings drops them, so the server stores the prompt without them.
+  const stored = 'Write local draft output/notes.txt?\n\nShip the draft.';
+  const server = (question) => ({ ...question, prompt: stored });
+  for (const tail of ['\u200F', '\u200B', '\u00AD']) {
+    const { client, calls } = createOfflineClient({ onCreate: server, onWait: server });
+    let written;
+    const result = await reviewThenExecute({
+      client, room: 'DEMO', timeoutMs: 1000,
+      proposal: { action: 'write_draft', filename: 'notes.txt', content: `Ship the draft.${tail}` },
+      execute: async (value) => { written = value.content; return 'saved'; },
+    });
+    assert.equal(result.executed, true, JSON.stringify(tail));
+    assert.equal(written, 'Ship the draft.');
+    assert.equal(calls[0].body.prompt, stored);
+  }
+  assert.throws(() => validateProposal({ action: 'write_draft', filename: 'notes.txt', content: '\u200B\u00AD' }), /1–280/);
+});
